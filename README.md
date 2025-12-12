@@ -13,18 +13,20 @@ This report presents a comprehensive analysis of the Graph Attention Long Short-
 **Objective**: Predict future price sequences for agricultural commodities across multiple spatially-distributed markets.
 
 **Input**: 
-- Historical price sequence: $\mathbf{X} \in \mathbb{R}^{T \times d}$ where $T=60$ days, $d=6$ features
-- Mandi identifier: $m \in \{1, 2, ..., M\}$ where $M$ is total mandis
-- Crop identifier: $c \in \{1, 2, ..., C\}$ where $C$ is total crops
-- Spatial graph: $\mathcal{G} = (\mathcal{V}, \mathcal{E})$ with $|\mathcal{V}| = M$ nodes
+- Historical price sequence: $`\mathbf{X} \in \mathbb{R}^{T \times d}`$ where $`T=60`$ days, $`d=6`$ features
+- Mandi identifier: $`m \in \{1, 2, ..., M\}`$ where $`M`$ is total mandis
+- Crop identifier: $`c \in \{1, 2, ..., C\}`$ where $`C`$ is total crops
+- Spatial graph: $`\mathcal{G} = (\mathcal{V}, \mathcal{E})`$ with $`|\mathcal{V}| = M`$ nodes
 
 **Output**: 
-- Future price sequence: $\mathbf{Y} \in \mathbb{R}^{H}$ where $H=10$ forecast horizon
+- Future price sequence: $`\mathbf{Y} \in \mathbb{R}^{H}`$ where $`H=10`$ forecast horizon
 
 **Mathematical Formulation**:
-$$\hat{\mathbf{Y}} = f_\theta(\mathbf{X}, m, c, \mathcal{G})$$
+```math
+\hat{\mathbf{Y}} = f_\theta(\mathbf{X}, m, c, \mathcal{G})
+```
 
-where $f_\theta$ is our learned function parameterized by $\theta$.
+where $`f_\theta`$ is our learned function parameterized by $`\theta`$.
 
 ### 1.2 Challenges
 
@@ -58,44 +60,58 @@ Input → Embeddings → Spatial Encoding (GAT) → Temporal Encoding (LSTM Enco
 **Purpose**: Transform discrete identifiers into continuous vector representations.
 
 **Mandi Embedding**:
-$$\mathbf{e}_m = \mathbf{E}_m[m] \in \mathbb{R}^{d_m}$$
+```math
+\mathbf{e}_m = \mathbf{E}_m[m] \in \mathbb{R}^{d_m}
+```
 
-where $\mathbf{E}_m \in \mathbb{R}^{M \times d_m}$ is the learnable embedding matrix, $d_m = 32$.
+where $`\mathbf{E}_m \in \mathbb{R}^{M \times d_m}`$ is the learnable embedding matrix, $`d_m = 32`$.
 
 **Crop Embedding**:
-$$\mathbf{e}_c = \mathbf{E}_c[c] \in \mathbb{R}^{d_c}$$
+```math
+\mathbf{e}_c = \mathbf{E}_c[c] \in \mathbb{R}^{d_c}
+```
 
-where $\mathbf{E}_c \in \mathbb{R}^{C \times d_c}$ is the learnable embedding matrix, $d_c = 16$.
+where $`\mathbf{E}_c \in \mathbb{R}^{C \times d_c}`$ is the learnable embedding matrix, $`d_c = 16`$.
 
 **Rationale**: Embeddings allow the model to learn that similar mandis (e.g., geographically close, similar climate) should have similar representations. This is more expressive than one-hot encoding.
 
 **Combined Embedding**:
-$$\mathbf{e} = [\mathbf{e}_m; \mathbf{e}_c] \in \mathbb{R}^{48}$$
+```math
+\mathbf{e} = [\mathbf{e}_m; \mathbf{e}_c] \in \mathbb{R}^{48}
+```
 
-where $[;]$ denotes concatenation.
+where $`[;]`$ denotes concatenation.
 
 ---
 
 ### 3.2 Feature Combination
 
-**Input Features** (per timestep $t$):
-- $p_t$: Price (Imp_Price)
-- $month_t$: Month (1-12)
-- $dow_t$: Day of week (0-6)
-- $doy_t$: Day of year (1-365)
-- $temp_t$: Mean temperature
-- $rain_t$: Mean rainfall
+**Input Features** (per timestep $`t`$):
+- $`p_t`$: Price (Imp_Price)
+- $`month_t`$: Month (1-12)
+- $`dow_t`$: Day of week (0-6)
+- $`doy_t`$: Day of year (1-365)
+- $`temp_t`$: Mean temperature
+- $`rain_t`$: Mean rainfall
 
 **Feature Vector**:
-$$\mathbf{x}_t = [p_t, month_t, dow_t, doy_t, temp_t, rain_t]^T \in \mathbb{R}^6$$
+```math
+\mathbf{x}_t = [p_t, month_t, dow_t, doy_t, temp_t, rain_t]^T \in \mathbb{R}^6
+```
 
 **Sequence**:
-$$\mathbf{X} = [\mathbf{x}_1, \mathbf{x}_2, ..., \mathbf{x}_T] \in \mathbb{R}^{T \times 6}$$
+```math
+\mathbf{X} = [\mathbf{x}_1, \mathbf{x}_2, ..., \mathbf{x}_T] \in \mathbb{R}^{T \times 6}
+```
 
 **Combined Representation** (broadcast embedding to all timesteps):
-$$\mathbf{Z}_t = [\mathbf{x}_t; \mathbf{e}] \in \mathbb{R}^{54}$$
+```math
+\mathbf{Z}_t = [\mathbf{x}_t; \mathbf{e}] \in \mathbb{R}^{54}
+```
 
-$$\mathbf{Z} = [\mathbf{Z}_1, \mathbf{Z}_2, ..., \mathbf{Z}_T] \in \mathbb{R}^{T \times 54}$$
+```math
+\mathbf{Z} = [\mathbf{Z}_1, \mathbf{Z}_2, ..., \mathbf{Z}_T] \in \mathbb{R}^{T \times 54}
+```
 
 ---
 
@@ -105,62 +121,86 @@ $$\mathbf{Z} = [\mathbf{Z}_1, \mathbf{Z}_2, ..., \mathbf{Z}_T] \in \mathbb{R}^{T
 
 #### 3.3.1 LSTM Cell Mathematics
 
-An LSTM cell at timestep $t$ computes:
+An LSTM cell at timestep $`t`$ computes:
 
 **Forget Gate** (what to forget from previous memory):
-$$\mathbf{f}_t = \sigma(\mathbf{W}_f \mathbf{Z}_t + \mathbf{U}_f \mathbf{h}_{t-1} + \mathbf{b}_f)$$
+```math
+\mathbf{f}_t = \sigma(\mathbf{W}_f \mathbf{Z}_t + \mathbf{U}_f \mathbf{h}_{t-1} + \mathbf{b}_f)
+```
 
 **Input Gate** (what new information to store):
-$$\mathbf{i}_t = \sigma(\mathbf{W}_i \mathbf{Z}_t + \mathbf{U}_i \mathbf{h}_{t-1} + \mathbf{b}_i)$$
+```math
+\mathbf{i}_t = \sigma(\mathbf{W}_i \mathbf{Z}_t + \mathbf{U}_i \mathbf{h}_{t-1} + \mathbf{b}_i)
+```
 
 **Candidate Memory** (new information):
-$$\tilde{\mathbf{c}}_t = \tanh(\mathbf{W}_c \mathbf{Z}_t + \mathbf{U}_c \mathbf{h}_{t-1} + \mathbf{b}_c)$$
+```math
+\tilde{\mathbf{c}}_t = \tanh(\mathbf{W}_c \mathbf{Z}_t + \mathbf{U}_c \mathbf{h}_{t-1} + \mathbf{b}_c)
+```
 
 **Cell State Update** (combine old and new):
-$$\mathbf{c}_t = \mathbf{f}_t \odot \mathbf{c}_{t-1} + \mathbf{i}_t \odot \tilde{\mathbf{c}}_t$$
+```math
+\mathbf{c}_t = \mathbf{f}_t \odot \mathbf{c}_{t-1} + \mathbf{i}_t \odot \tilde{\mathbf{c}}_t
+```
 
 **Output Gate** (what to output):
-$$\mathbf{o}_t = \sigma(\mathbf{W}_o \mathbf{Z}_t + \mathbf{U}_o \mathbf{h}_{t-1} + \mathbf{b}_o)$$
+```math
+\mathbf{o}_t = \sigma(\mathbf{W}_o \mathbf{Z}_t + \mathbf{U}_o \mathbf{h}_{t-1} + \mathbf{b}_o)
+```
 
 **Hidden State**:
-$$\mathbf{h}_t = \mathbf{o}_t \odot \tanh(\mathbf{c}_t)$$
+```math
+\mathbf{h}_t = \mathbf{o}_t \odot \tanh(\mathbf{c}_t)
+```
 
 where:
-- $\sigma(\cdot)$ is the sigmoid function: $\sigma(x) = \frac{1}{1 + e^{-x}}$
-- $\odot$ is element-wise multiplication (Hadamard product)
-- $\mathbf{W}_*, \mathbf{U}_* \in \mathbb{R}^{d_h \times d_{in}}$ are weight matrices
-- $\mathbf{b}_* \in \mathbb{R}^{d_h}$ are bias vectors
-- $d_h = 128$ is the hidden dimension
+- $`\sigma(\cdot)`$ is the sigmoid function: $`\sigma(x) = \frac{1}{1 + e^{-x}}`$
+- $`\odot`$ is element-wise multiplication (Hadamard product)
+- $`\mathbf{W}_*, \mathbf{U}_* \in \mathbb{R}^{d_h \times d_{in}}`$ are weight matrices
+- $`\mathbf{b}_* \in \mathbb{R}^{d_h}`$ are bias vectors
+- $`d_h = 128`$ is the hidden dimension
 
 #### 3.3.2 Multi-layer LSTM
 
-For $L=2$ layers:
+For $`L=2`$ layers:
 
 **Layer 1**:
-$$\mathbf{h}_t^{(1)}, \mathbf{c}_t^{(1)} = \text{LSTM}^{(1)}(\mathbf{Z}_t, \mathbf{h}_{t-1}^{(1)}, \mathbf{c}_{t-1}^{(1)})$$
+```math
+\mathbf{h}_t^{(1)}, \mathbf{c}_t^{(1)} = \text{LSTM}^{(1)}(\mathbf{Z}_t, \mathbf{h}_{t-1}^{(1)}, \mathbf{c}_{t-1}^{(1)})
+```
 
 **Layer 2**:
-$$\mathbf{h}_t^{(2)}, \mathbf{c}_t^{(2)} = \text{LSTM}^{(2)}(\mathbf{h}_t^{(1)}, \mathbf{h}_{t-1}^{(2)}, \mathbf{c}_{t-1}^{(2)})$$
+```math
+\mathbf{h}_t^{(2)}, \mathbf{c}_t^{(2)} = \text{LSTM}^{(2)}(\mathbf{h}_t^{(1)}, \mathbf{h}_{t-1}^{(2)}, \mathbf{c}_{t-1}^{(2)})
+```
 
 **Final Encoder Output**:
-$$\mathbf{H} = [\mathbf{h}_1^{(2)}, \mathbf{h}_2^{(2)}, ..., \mathbf{h}_T^{(2)}] \in \mathbb{R}^{T \times d_h}$$
+```math
+\mathbf{H} = [\mathbf{h}_1^{(2)}, \mathbf{h}_2^{(2)}, ..., \mathbf{h}_T^{(2)}] \in \mathbb{R}^{T \times d_h}
+```
 
 **Final Hidden and Cell States**:
-$$\mathbf{h}_{\text{enc}} = \mathbf{h}_T^{(2)}, \quad \mathbf{c}_{\text{enc}} = \mathbf{c}_T^{(2)}$$
+```math
+\mathbf{h}_{\text{enc}} = \mathbf{h}_T^{(2)}, \quad \mathbf{c}_{\text{enc}} = \mathbf{c}_T^{(2)}
+```
 
 #### 3.3.3 Why LSTM?
 
 **Vanishing Gradient Problem**: Traditional RNNs suffer from vanishing gradients when learning long-term dependencies:
 
-$$\frac{\partial \mathcal{L}}{\partial \mathbf{h}_1} = \frac{\partial \mathcal{L}}{\partial \mathbf{h}_T} \prod_{t=2}^{T} \frac{\partial \mathbf{h}_t}{\partial \mathbf{h}_{t-1}}$$
+```math
+\frac{\partial \mathcal{L}}{\partial \mathbf{h}_1} = \frac{\partial \mathcal{L}}{\partial \mathbf{h}_T} \prod_{t=2}^{T} \frac{\partial \mathbf{h}_t}{\partial \mathbf{h}_{t-1}}
+```
 
-If $\|\frac{\partial \mathbf{h}_t}{\partial \mathbf{h}_{t-1}}\| < 1$, the gradient vanishes exponentially.
+If $`\|\frac{\partial \mathbf{h}_t}{\partial \mathbf{h}_{t-1}}\| < 1`$, the gradient vanishes exponentially.
 
-**LSTM Solution**: The cell state $\mathbf{c}_t$ provides a "highway" for gradients:
+**LSTM Solution**: The cell state $`\mathbf{c}_t`$ provides a "highway" for gradients:
 
-$$\frac{\partial \mathbf{c}_t}{\partial \mathbf{c}_{t-1}} = \mathbf{f}_t$$
+```math
+\frac{\partial \mathbf{c}_t}{\partial \mathbf{c}_{t-1}} = \mathbf{f}_t
+```
 
-Since $\mathbf{f}_t$ is learned, the model can preserve gradients when needed.
+Since $`\mathbf{f}_t`$ is learned, the model can preserve gradients when needed.
 
 ---
 
@@ -171,27 +211,41 @@ Since $\mathbf{f}_t$ is learned, the model can preserve gradients when needed.
 #### 3.4.1 Decoder Mechanism
 
 **Initialization**:
-$$\mathbf{h}_0^{\text{dec}} = \mathbf{h}_{\text{enc}}, \quad \mathbf{c}_0^{\text{dec}} = \mathbf{c}_{\text{enc}}$$
+```math
+\mathbf{h}_0^{\text{dec}} = \mathbf{h}_{\text{enc}}, \quad \mathbf{c}_0^{\text{dec}} = \mathbf{c}_{\text{enc}}
+```
 
-$$\mathbf{d}_0 = \mathbf{h}_T^{(2)} \quad \text{(last encoder output)}$$
+```math
+\mathbf{d}_0 = \mathbf{h}_T^{(2)} \quad \text{(last encoder output)}
+```
 
-**Autoregressive Generation** (for $k = 1, 2, ..., H$):
+**Autoregressive Generation** (for $`k = 1, 2, ..., H`$):
 
-$$\mathbf{h}_k^{\text{dec}}, \mathbf{c}_k^{\text{dec}} = \text{LSTM}_{\text{dec}}(\mathbf{d}_{k-1}, \mathbf{h}_{k-1}^{\text{dec}}, \mathbf{c}_{k-1}^{\text{dec}})$$
+```math
+\mathbf{h}_k^{\text{dec}}, \mathbf{c}_k^{\text{dec}} = \text{LSTM}_{\text{dec}}(\mathbf{d}_{k-1}, \mathbf{h}_{k-1}^{\text{dec}}, \mathbf{c}_{k-1}^{\text{dec}})
+```
 
-$$\hat{y}_k = \mathbf{W}_{\text{out}} \mathbf{h}_k^{\text{dec}} + b_{\text{out}}$$
+```math
+\hat{y}_k = \mathbf{W}_{\text{out}} \mathbf{h}_k^{\text{dec}} + b_{\text{out}}
+```
 
-$$\mathbf{d}_k = \mathbf{h}_k^{\text{dec}}$$
+```math
+\mathbf{d}_k = \mathbf{h}_k^{\text{dec}}
+```
 
-where $\mathbf{W}_{\text{out}} \in \mathbb{R}^{1 \times d_h}$ is the output projection.
+where $`\mathbf{W}_{\text{out}} \in \mathbb{R}^{1 \times d_h}`$ is the output projection.
 
 **Final Predictions**:
-$$\hat{\mathbf{Y}} = [\hat{y}_1, \hat{y}_2, ..., \hat{y}_H]^T \in \mathbb{R}^H$$
+```math
+\hat{\mathbf{Y}} = [\hat{y}_1, \hat{y}_2, ..., \hat{y}_H]^T \in \mathbb{R}^H
+```
 
 #### 3.4.2 Why Autoregressive?
 
 **Dependency Modeling**: Future prices depend on previous predictions:
-$$p(y_{t+k} | \mathbf{X}) = p(y_{t+k} | y_{t+1}, ..., y_{t+k-1}, \mathbf{X})$$
+```math
+p(y_{t+k} | \mathbf{X}) = p(y_{t+k} | y_{t+1}, ..., y_{t+k-1}, \mathbf{X})
+```
 
 **Error Propagation**: While autoregressive models can accumulate errors, they better capture sequential dependencies than independent predictions.
 
@@ -205,45 +259,61 @@ $$p(y_{t+k} | \mathbf{X}) = p(y_{t+k} | y_{t+1}, ..., y_{t+k-1}, \mathbf{X})$$
 
 **k-Nearest Neighbors Graph**:
 
-For each mandi $i$ with coordinates $(lat_i, lon_i)$:
+For each mandi $`i`$ with coordinates $`(lat_i, lon_i)`$:
 
 **Haversine Distance** (great-circle distance):
-$$d(i, j) = 2r \arcsin\left(\sqrt{\sin^2\left(\frac{\Delta lat}{2}\right) + \cos(lat_i)\cos(lat_j)\sin^2\left(\frac{\Delta lon}{2}\right)}\right)$$
+```math
+d(i, j) = 2r \arcsin\left(\sqrt{\sin^2\left(\frac{\Delta lat}{2}\right) + \cos(lat_i)\cos(lat_j)\sin^2\left(\frac{\Delta lon}{2}\right)}\right)
+```
 
-where $r = 6371$ km (Earth's radius).
+where $`r = 6371`$ km (Earth's radius).
 
 **Edge Set**:
-$$\mathcal{E} = \{(i, j) : j \in \text{k-NN}(i)\}$$
+```math
+\mathcal{E} = \{(i, j) : j \in \text{k-NN}(i)\}
+```
 
 **Edge Weights** (inverse distance):
-$$w_{ij} = \frac{1}{d(i,j) + \epsilon}$$
+```math
+w_{ij} = \frac{1}{d(i,j) + \epsilon}
+```
 
 Normalized:
-$$\tilde{w}_{ij} = \frac{w_{ij}}{\sum_{k \in \mathcal{N}(i)} w_{ik}}$$
+```math
+\tilde{w}_{ij} = \frac{w_{ij}}{\sum_{k \in \mathcal{N}(i)} w_{ik}}
+```
 
 #### 3.5.2 Graph Attention Mechanism
 
-**Attention Coefficient** (importance of node $j$ to node $i$):
+**Attention Coefficient** (importance of node $`j`$ to node $`i`$):
 
-$$e_{ij} = \text{LeakyReLU}(\mathbf{a}^T [\mathbf{W}\mathbf{h}_i \| \mathbf{W}\mathbf{h}_j])$$
+```math
+e_{ij} = \text{LeakyReLU}(\mathbf{a}^T [\mathbf{W}\mathbf{h}_i \| \mathbf{W}\mathbf{h}_j])
+```
 
 where:
-- $\mathbf{W} \in \mathbb{R}^{d' \times d}$ is a learnable transformation
-- $\mathbf{a} \in \mathbb{R}^{2d'}$ is the attention mechanism
-- $\|$ denotes concatenation
+- $`\mathbf{W} \in \mathbb{R}^{d' \times d}`$ is a learnable transformation
+- $`\mathbf{a} \in \mathbb{R}^{2d'}`$ is the attention mechanism
+- $`\|`$ denotes concatenation
 
 **Normalized Attention** (softmax over neighbors):
-$$\alpha_{ij} = \frac{\exp(e_{ij})}{\sum_{k \in \mathcal{N}(i)} \exp(e_{ik})}$$
+```math
+\alpha_{ij} = \frac{\exp(e_{ij})}{\sum_{k \in \mathcal{N}(i)} \exp(e_{ik})}
+```
 
 **Aggregated Features**:
-$$\mathbf{h}_i' = \sigma\left(\sum_{j \in \mathcal{N}(i)} \alpha_{ij} \mathbf{W} \mathbf{h}_j\right)$$
+```math
+\mathbf{h}_i' = \sigma\left(\sum_{j \in \mathcal{N}(i)} \alpha_{ij} \mathbf{W} \mathbf{h}_j\right)
+```
 
 #### 3.5.3 Multi-head Attention
 
 **K Attention Heads**:
-$$\mathbf{h}_i' = \|_{k=1}^K \sigma\left(\sum_{j \in \mathcal{N}(i)} \alpha_{ij}^k \mathbf{W}^k \mathbf{h}_j\right)$$
+```math
+\mathbf{h}_i' = \|_{k=1}^K \sigma\left(\sum_{j \in \mathcal{N}(i)} \alpha_{ij}^k \mathbf{W}^k \mathbf{h}_j\right)
+```
 
-where $\|$ denotes concatenation, $K=4$ heads.
+where $`\|`$ denotes concatenation, $`K=4`$ heads.
 
 **Rationale**: Multiple heads capture different types of spatial relationships (e.g., geographic proximity, trade volume, price correlation).
 
@@ -254,13 +324,15 @@ where $\|$ denotes concatenation, $K=4$ heads.
 ### 4.1 Loss Function
 
 **Mean Squared Error (MSE)**:
-$$\mathcal{L}(\theta) = \frac{1}{N \cdot H} \sum_{n=1}^N \sum_{h=1}^H (y_n^{(h)} - \hat{y}_n^{(h)})^2$$
+```math
+\mathcal{L}(\theta) = \frac{1}{N \cdot H} \sum_{n=1}^N \sum_{h=1}^H (y_n^{(h)} - \hat{y}_n^{(h)})^2
+```
 
 where:
-- $N$ is batch size
-- $H = 10$ is forecast horizon
-- $y_n^{(h)}$ is actual price at horizon $h$ for sample $n$
-- $\hat{y}_n^{(h)}$ is predicted price
+- $`N`$ is batch size
+- $`H = 10`$ is forecast horizon
+- $`y_n^{(h)}`$ is actual price at horizon $`h`$ for sample $`n`$
+- $`\hat{y}_n^{(h)}`$ is predicted price
 
 **Why MSE?**
 - Differentiable (required for gradient descent)
@@ -272,24 +344,32 @@ where:
 **Adam Optimizer**:
 
 **Parameter Update**:
-$$\theta_{t+1} = \theta_t - \alpha \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}$$
+```math
+\theta_{t+1} = \theta_t - \alpha \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}
+```
 
 where:
 
 **First Moment Estimate** (mean of gradients):
-$$m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t$$
+```math
+m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t
+```
 
 **Second Moment Estimate** (variance of gradients):
-$$v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2$$
+```math
+v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2
+```
 
 **Bias Correction**:
-$$\hat{m}_t = \frac{m_t}{1 - \beta_1^t}, \quad \hat{v}_t = \frac{v_t}{1 - \beta_2^t}$$
+```math
+\hat{m}_t = \frac{m_t}{1 - \beta_1^t}, \quad \hat{v}_t = \frac{v_t}{1 - \beta_2^t}
+```
 
 **Hyperparameters**:
-- Learning rate: $\alpha = 10^{-3}$
-- $\beta_1 = 0.9$ (momentum)
-- $\beta_2 = 0.999$ (RMSprop)
-- $\epsilon = 10^{-8}$ (numerical stability)
+- Learning rate: $`\alpha = 10^{-3}`$
+- $`\beta_1 = 0.9`$ (momentum)
+- $`\beta_2 = 0.999`$ (RMSprop)
+- $`\epsilon = 10^{-8}`$ (numerical stability)
 
 **Why Adam?**
 - Adaptive learning rates per parameter
@@ -301,30 +381,38 @@ $$\hat{m}_t = \frac{m_t}{1 - \beta_1^t}, \quad \hat{v}_t = \frac{v_t}{1 - \beta_
 #### 4.3.1 L2 Regularization (Weight Decay)
 
 **Modified Loss**:
-$$\mathcal{L}_{\text{reg}}(\theta) = \mathcal{L}(\theta) + \lambda \sum_{i} \theta_i^2$$
+```math
+\mathcal{L}_{\text{reg}}(\theta) = \mathcal{L}(\theta) + \lambda \sum_{i} \theta_i^2
+```
 
-where $\lambda = 10^{-5}$.
+where $`\lambda = 10^{-5}`$.
 
 **Effect**: Prevents weights from growing too large, reducing overfitting.
 
 #### 4.3.2 Dropout
 
-**Training**: Randomly zero out activations with probability $p = 0.2$:
-$$\mathbf{h}_{\text{drop}} = \mathbf{h} \odot \mathbf{m}, \quad \mathbf{m} \sim \text{Bernoulli}(1-p)$$
+**Training**: Randomly zero out activations with probability $`p = 0.2`$:
+```math
+\mathbf{h}_{\text{drop}} = \mathbf{h} \odot \mathbf{m}, \quad \mathbf{m} \sim \text{Bernoulli}(1-p)
+```
 
 **Inference**: Scale activations:
-$$\mathbf{h}_{\text{test}} = (1-p) \mathbf{h}$$
+```math
+\mathbf{h}_{\text{test}} = (1-p) \mathbf{h}
+```
 
 **Why Dropout?**
 - Prevents co-adaptation of neurons
-- Ensemble effect (averaging over $2^n$ networks)
+- Ensemble effect (averaging over $`2^n`$ networks)
 
 #### 4.3.3 Gradient Clipping
 
 **Clip Gradient Norm**:
-$$\mathbf{g} \leftarrow \frac{\mathbf{g}}{\max(1, \|\mathbf{g}\| / \tau)}$$
+```math
+\mathbf{g} \leftarrow \frac{\mathbf{g}}{\max(1, \|\mathbf{g}\| / \tau)}
+```
 
-where $\tau = 1.0$ is the threshold.
+where $`\tau = 1.0`$ is the threshold.
 
 **Why?** Prevents exploding gradients in RNNs.
 
@@ -332,16 +420,18 @@ where $\tau = 1.0$ is the threshold.
 
 **ReduceLROnPlateau**:
 
-If validation loss doesn't improve for $p = 5$ epochs:
-$$\alpha \leftarrow \alpha \cdot \gamma$$
+If validation loss doesn't improve for $`p = 5`$ epochs:
+```math
+\alpha \leftarrow \alpha \cdot \gamma
+```
 
-where $\gamma = 0.5$ (reduction factor).
+where $`\gamma = 0.5`$ (reduction factor).
 
 **Rationale**: Fine-tune learning as model converges.
 
 ### 4.5 Early Stopping
 
-**Criterion**: Stop training if validation loss doesn't improve for $p_{\text{stop}} = 10$ epochs.
+**Criterion**: Stop training if validation loss doesn't improve for $`p_{\text{stop}} = 10`$ epochs.
 
 **Why?** Prevents overfitting and saves computation.
 
@@ -353,10 +443,14 @@ where $\gamma = 0.5$ (reduction factor).
 
 **StandardScaler** (z-score normalization):
 
-$$\tilde{x}_i = \frac{x_i - \mu}{\sigma}$$
+```math
+\tilde{x}_i = \frac{x_i - \mu}{\sigma}
+```
 
 where:
-$$\mu = \frac{1}{N}\sum_{i=1}^N x_i, \quad \sigma = \sqrt{\frac{1}{N}\sum_{i=1}^N (x_i - \mu)^2}$$
+```math
+\mu = \frac{1}{N}\sum_{i=1}^N x_i, \quad \sigma = \sqrt{\frac{1}{N}\sum_{i=1}^N (x_i - \mu)^2}
+```
 
 **Why?**
 - Ensures all features have similar scales
@@ -364,11 +458,13 @@ $$\mu = \frac{1}{N}\sum_{i=1}^N x_i, \quad \sigma = \sqrt{\frac{1}{N}\sum_{i=1}^
 - Prevents features with large magnitudes from dominating
 
 **Applied to**:
-- Input features: $\mathbf{X}$
-- Target prices: $\mathbf{Y}$
+- Input features: $`\mathbf{X}`$
+- Target prices: $`\mathbf{Y}`$
 
 **Denormalization** (for predictions):
-$$x = \tilde{x} \cdot \sigma + \mu$$
+```math
+x = \tilde{x} \cdot \sigma + \mu
+```
 
 ### 5.2 Temporal Splitting
 
@@ -377,9 +473,15 @@ $$x = \tilde{x} \cdot \sigma + \mu$$
 **Why Temporal?** Prevents data leakage - model shouldn't see future data during training.
 
 **Critical**: Sort by date before splitting:
-$$\mathcal{D}_{\text{train}} = \{(\mathbf{X}_i, \mathbf{Y}_i) : t_i < t_{\text{split1}}\}$$
-$$\mathcal{D}_{\text{val}} = \{(\mathbf{X}_i, \mathbf{Y}_i) : t_{\text{split1}} \leq t_i < t_{\text{split2}}\}$$
-$$\mathcal{D}_{\text{test}} = \{(\mathbf{X}_i, \mathbf{Y}_i) : t_i \geq t_{\text{split2}}\}$$
+```math
+\mathcal{D}_{\text{train}} = \{(\mathbf{X}_i, \mathbf{Y}_i) : t_i < t_{\text{split1}}\}
+```
+```math
+\mathcal{D}_{\text{val}} = \{(\mathbf{X}_i, \mathbf{Y}_i) : t_{\text{split1}} \leq t_i < t_{\text{split2}}\}
+```
+```math
+\mathcal{D}_{\text{test}} = \{(\mathbf{X}_i, \mathbf{Y}_i) : t_i \geq t_{\text{split2}}\}
+```
 
 ---
 
@@ -388,30 +490,32 @@ $$\mathcal{D}_{\text{test}} = \{(\mathbf{X}_i, \mathbf{Y}_i) : t_i \geq t_{\text
 ### 6.1 Parameter Count
 
 **Embeddings**:
-- Mandi: $M \times 32$
-- Crop: $C \times 16$
+- Mandi: $`M \times 32`$
+- Crop: $`C \times 16`$
 
 **LSTM Encoder** (per layer):
-- Input to hidden: $4 \times (d_{\text{in}} \times d_h + d_h \times d_h + d_h)$
-- Layer 1: $4 \times (54 \times 128 + 128 \times 128 + 128) = 94,720$
-- Layer 2: $4 \times (128 \times 128 + 128 \times 128 + 128) = 66,048$
+- Input to hidden: $`4 \times (d_{\text{in}} \times d_h + d_h \times d_h + d_h)`$
+- Layer 1: $`4 \times (54 \times 128 + 128 \times 128 + 128) = 94,720`$
+- Layer 2: $`4 \times (128 \times 128 + 128 \times 128 + 128) = 66,048`$
 
 **LSTM Decoder** (2 layers):
-- Similar to encoder: $2 \times 66,048 = 132,096$
+- Similar to encoder: $`2 \times 66,048 = 132,096`$
 
 **Output Layer**:
-- $128 \times 1 + 1 = 129$
+- $`128 \times 1 + 1 = 129`$
 
-**Total**: ~597,745 parameters (for $M=520$, $C=1$)
+**Total**: ~597,745 parameters (for $`M=520`$, $`C=1`$)
 
 ### 6.2 Computational Complexity
 
-**LSTM Forward Pass**: $\mathcal{O}(T \cdot d_h^2)$
+**LSTM Forward Pass**: $`\mathcal{O}(T \cdot d_h^2)`$
 
 **Training Complexity** (per epoch):
-$$\mathcal{O}(N \cdot T \cdot d_h^2)$$
+```math
+\mathcal{O}(N \cdot T \cdot d_h^2)
+```
 
-where $N \approx 920,000$ samples, $T = 60$, $d_h = 128$.
+where $`N \approx 920,000`$ samples, $`T = 60`$, $`d_h = 128`$.
 
 **GPU Speedup**: ~10-15x due to parallelization across batch dimension.
 
@@ -421,7 +525,7 @@ where $N \approx 920,000$ samples, $T = 60$, $d_h = 128$.
 
 ### 7.1 Universal Approximation
 
-**Theorem** (Cybenko, 1989): A feedforward network with a single hidden layer containing a finite number of neurons can approximate any continuous function on compact subsets of $\mathbb{R}^n$.
+**Theorem** (Cybenko, 1989): A feedforward network with a single hidden layer containing a finite number of neurons can approximate any continuous function on compact subsets of $`\mathbb{R}^n`$.
 
 **Implication**: Our multi-layer LSTM can theoretically approximate any temporal mapping.
 
@@ -429,11 +533,13 @@ where $N \approx 920,000$ samples, $T = 60$, $d_h = 128$.
 
 **Encoder-Decoder Framework** (Sutskever et al., 2014):
 
-$$p(\mathbf{Y} | \mathbf{X}) = \prod_{h=1}^H p(y_h | y_1, ..., y_{h-1}, \mathbf{X})$$
+```math
+p(\mathbf{Y} | \mathbf{X}) = \prod_{h=1}^H p(y_h | y_1, ..., y_{h-1}, \mathbf{X})
+```
 
-**Encoder**: Compresses $\mathbf{X}$ into fixed-size representation $\mathbf{h}_{\text{enc}}$
+**Encoder**: Compresses $`\mathbf{X}`$ into fixed-size representation $`\mathbf{h}_{\text{enc}}`$
 
-**Decoder**: Generates $\mathbf{Y}$ conditioned on $\mathbf{h}_{\text{enc}}$
+**Decoder**: Generates $`\mathbf{Y}`$ conditioned on $`\mathbf{h}_{\text{enc}}`$
 
 ### 7.3 Attention Mechanism
 
@@ -441,9 +547,11 @@ $$p(\mathbf{Y} | \mathbf{X}) = \prod_{h=1}^H p(y_h | y_1, ..., y_{h-1}, \mathbf{
 
 **Solution**: Attention allows decoder to focus on relevant parts of input:
 
-$$\mathbf{c}_k = \sum_{t=1}^T \alpha_{kt} \mathbf{h}_t$$
+```math
+\mathbf{c}_k = \sum_{t=1}^T \alpha_{kt} \mathbf{h}_t
+```
 
-where $\alpha_{kt}$ is attention weight for timestep $t$ at decoding step $k$.
+where $`\alpha_{kt}`$ is attention weight for timestep $`t`$ at decoding step $`k`$.
 
 ---
 
@@ -452,35 +560,47 @@ where $\alpha_{kt}$ is attention weight for timestep $t$ at decoding step $k$.
 ### 8.1 Point Metrics
 
 **Mean Squared Error (MSE)**:
-$$\text{MSE} = \frac{1}{N \cdot H} \sum_{n=1}^N \sum_{h=1}^H (y_n^{(h)} - \hat{y}_n^{(h)})^2$$
+```math
+\text{MSE} = \frac{1}{N \cdot H} \sum_{n=1}^N \sum_{h=1}^H (y_n^{(h)} - \hat{y}_n^{(h)})^2
+```
 
 **Root Mean Squared Error (RMSE)**:
-$$\text{RMSE} = \sqrt{\text{MSE}}$$
+```math
+\text{RMSE} = \sqrt{\text{MSE}}
+```
 
 **Mean Absolute Error (MAE)**:
-$$\text{MAE} = \frac{1}{N \cdot H} \sum_{n=1}^N \sum_{h=1}^H |y_n^{(h)} - \hat{y}_n^{(h)}|$$
+```math
+\text{MAE} = \frac{1}{N \cdot H} \sum_{n=1}^N \sum_{h=1}^H |y_n^{(h)} - \hat{y}_n^{(h)}|
+```
 
 **Mean Absolute Percentage Error (MAPE)**:
-$$\text{MAPE} = \frac{100\%}{N \cdot H} \sum_{n=1}^N \sum_{h=1}^H \left|\frac{y_n^{(h)} - \hat{y}_n^{(h)}}{y_n^{(h)}}\right|$$
+```math
+\text{MAPE} = \frac{100\%}{N \cdot H} \sum_{n=1}^N \sum_{h=1}^H \left|\frac{y_n^{(h)} - \hat{y}_n^{(h)}}{y_n^{(h)}}\right|
+```
 
 ### 8.2 Goodness-of-Fit
 
 **R² Score** (Coefficient of Determination):
-$$R^2 = 1 - \frac{\sum_{i} (y_i - \hat{y}_i)^2}{\sum_{i} (y_i - \bar{y})^2}$$
+```math
+R^2 = 1 - \frac{\sum_{i} (y_i - \hat{y}_i)^2}{\sum_{i} (y_i - \bar{y})^2}
+```
 
-where $\bar{y}$ is the mean of actual values.
+where $`\bar{y}`$ is the mean of actual values.
 
 **Interpretation**:
-- $R^2 = 1$: Perfect predictions
-- $R^2 = 0$: Model performs as well as predicting mean
-- $R^2 < 0$: Model worse than predicting mean
+- $`R^2 = 1`$: Perfect predictions
+- $`R^2 = 0`$: Model performs as well as predicting mean
+- $`R^2 < 0`$: Model worse than predicting mean
 
 ### 8.3 Horizon-Specific Metrics
 
 **Per-Day RMSE**:
-$$\text{RMSE}_h = \sqrt{\frac{1}{N} \sum_{n=1}^N (y_n^{(h)} - \hat{y}_n^{(h)})^2}$$
+```math
+\text{RMSE}_h = \sqrt{\frac{1}{N} \sum_{n=1}^N (y_n^{(h)} - \hat{y}_n^{(h)})^2}
+```
 
-**Expected Behavior**: $\text{RMSE}_1 < \text{RMSE}_2 < ... < \text{RMSE}_{10}$
+**Expected Behavior**: $`\text{RMSE}_1 < \text{RMSE}_2 < ... < \text{RMSE}_{10}`$
 
 (Uncertainty compounds over forecast horizon)
 
@@ -538,20 +658,20 @@ The mathematical foundations ensure the model can learn complex patterns while r
 
 | Symbol | Description | Dimension |
 |--------|-------------|-----------|
-| $\mathbf{X}$ | Input sequence | $T \times d$ |
-| $\mathbf{Y}$ | Output sequence | $H$ |
-| $T$ | Input sequence length | 60 |
-| $H$ | Forecast horizon | 10 |
-| $d$ | Input feature dimension | 6 |
-| $M$ | Number of mandis | 520 |
-| $C$ | Number of crops | 1 |
-| $d_m$ | Mandi embedding dimension | 32 |
-| $d_c$ | Crop embedding dimension | 16 |
-| $d_h$ | LSTM hidden dimension | 128 |
-| $L$ | Number of LSTM layers | 2 |
-| $\mathbf{h}_t$ | Hidden state at time $t$ | $d_h$ |
-| $\mathbf{c}_t$ | Cell state at time $t$ | $d_h$ |
-| $\theta$ | Model parameters | ~597K |
-| $\alpha$ | Learning rate | $10^{-3}$ |
-| $\lambda$ | Weight decay | $10^{-5}$ |
-| $p$ | Dropout probability | 0.2 |
+| $`\mathbf{X}`$ | Input sequence | $`T \times d`$ |
+| $`\mathbf{Y}`$ | Output sequence | $`H`$ |
+| $`T`$ | Input sequence length | 60 |
+| $`H`$ | Forecast horizon | 10 |
+| $`d`$ | Input feature dimension | 6 |
+| $`M`$ | Number of mandis | 520 |
+| $`C`$ | Number of crops | 1 |
+| $`d_m`$ | Mandi embedding dimension | 32 |
+| $`d_c`$ | Crop embedding dimension | 16 |
+| $`d_h`$ | LSTM hidden dimension | 128 |
+| $`L`$ | Number of LSTM layers | 2 |
+| $`\mathbf{h}_t`$ | Hidden state at time $`t`$ | $`d_h`$ |
+| $`\mathbf{c}_t`$ | Cell state at time $`t`$ | $`d_h`$ |
+| $`\theta`$ | Model parameters | ~597K |
+| $`\alpha`$ | Learning rate | $`10^{-3}`$ |
+| $`\lambda`$ | Weight decay | $`10^{-5}`$ |
+| $`p`$ | Dropout probability | 0.2 |
